@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Assistant</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+  <h1>🤖</h1>
+  <h3> AI Assistant</h3>
+
+<button onclick="newChat()">+ New Chat</button>
+
+<div class="history-title">Chat History</div>
+<div id="history-list"></div>
+
+</aside>
+
+<main class="main">
+
+<div class="topbar">
+AI-Powered Chatbot
+</div>
+
+<div id="chat-box" class="chat-box">
+<div class="bot message">
+<div class="avatar">AI</div>
+<div>Hello! I'm your AI Assistant.</div>
+</div>
+</div>
+
+<div class="input-area">
+<input id="user-input" placeholder="Ask anything...">
+<button onclick="sendMessage()">➤</button>
+</div>
+
+</main>
+
+</div>
+
+<script>
+
+async function loadHistory(){
+
+let res=await fetch("/history");
+let data=await res.json();
+
+let history=document.getElementById("history-list");
+history.innerHTML="";
+
+data.forEach(chat=>{
+history.innerHTML+=`<div class="history-item">${chat[0]}</div>`;
+});
+
+}
+
+async function sendMessage(){
+
+let input=document.getElementById("user-input");
+let text=input.value.trim();
+
+if(!text) return;
+
+let chat=document.getElementById("chat-box");
+
+chat.innerHTML+=`
+<div class="user message">
+<div>${text}</div>
+</div>`;
+
+input.value="";
+
+chat.innerHTML+=`
+<div class="bot message typing" id="typing">
+<div class="avatar">AI</div>
+<div class="typing-dots">
+    <span>.</span>
+    <span>.</span>
+    <span>.</span>
+</div>
+</div>`;
+
+chat.scrollTop=chat.scrollHeight;
+
+let res=await fetch("/chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({message:text})
+});
+
+let data=await res.json();
+
+document.getElementById("typing").remove();
+
+chat.innerHTML+=`
+<div class="bot message">
+<div class="avatar">AI</div>
+<div>${data.reply}</div>
+</div>`;
+
+chat.scrollTop=chat.scrollHeight;
+
+loadHistory();
+
+}
+
+function newChat(){
+
+document.getElementById("chat-box").innerHTML=`
+<div class="bot message">
+<div class="avatar">AI</div>
+<div>New conversation started.</div>
+</div>`;
+
+}
+
+document.getElementById("user-input").addEventListener("keypress",e=>{
+if(e.key==="Enter") sendMessage();
+});
+
+loadHistory();
+
+</script>
+
+</body>
+</html>
